@@ -1,0 +1,38 @@
+// Windows resources: application icon, version info, common controls v6
+// manifest and DPI awareness.
+#include <winver.h>
+#include "version.h"
+
+// The first icon resource (alphabetically) becomes the icon of the .exe file.
+AAA_APPICON ICON "modbus_gui.ico"
+
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION     MODBUSGUI_VERSION_MAJOR, MODBUSGUI_VERSION_MINOR, MODBUSGUI_VERSION_PATCH, 0
+PRODUCTVERSION  MODBUSGUI_VERSION_MAJOR, MODBUSGUI_VERSION_MINOR, MODBUSGUI_VERSION_PATCH, 0
+FILEFLAGSMASK   VS_FFI_FILEFLAGSMASK
+FILEFLAGS       0
+FILEOS          VOS_NT_WINDOWS32
+FILETYPE        VFT_APP
+FILESUBTYPE     VFT2_UNKNOWN
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904B0"
+        BEGIN
+            VALUE "FileDescription", "Modbus GUI - Modbus master tool and slave simulator"
+            VALUE "FileVersion", MODBUSGUI_VERSION_STRING
+            VALUE "InternalName", "modbus_gui"
+            VALUE "OriginalFilename", "modbus_gui.exe"
+            VALUE "ProductName", "Modbus GUI"
+            VALUE "ProductVersion", MODBUSGUI_VERSION_STRING
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END
+
+#define wxUSE_RC_MANIFEST 1
+#define wxUSE_DPI_AWARE_MANIFEST 2
+#include "wx/msw/wx.rc"

@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Name=Modbus GUI
+GenericName=Modbus Master / Slave Simulator
+GenericName[ja]=Modbus マスター / スレーブシミュレータ
+Comment=Modbus TCP/RTU master tool and slave simulator
+Comment[ja]=Modbus TCP/RTU マスターツールおよびスレーブシミュレータ
+Exec=modbus_gui
+Icon=modbus-gui
+Terminal=false
+Categories=Development;Electronics;Engineering;
+Keywords=modbus;plc;rtu;tcp;scada;simulator;
+StartupWMClass=modbus_gui

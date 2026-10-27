@@ -1,0 +1,182 @@
+#!/usr/bin/env python3
+"""Generates the application icon set into resources/.
+
+Outputs:
+  resources/icons/modbus-gui-<N>.png   (16..512, Linux hicolor theme)
+  resources/modbus_gui.ico             (Windows, multi resolution)
+  src/AppIconData.h                    (embedded PNGs for the window icon)
+
+Run:  python3 tools/make_icons.py      (requires Pillow)
+The generated files are committed, so building does not need Python.
+"""
+import io
+import os
+import sys
+
+from PIL import Image, ImageDraw, ImageFilter
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+SIZES = [16, 20, 24, 32, 40, 48, 64, 128, 256, 512]
+
+BG_TOP = (28, 110, 196)
+BG_BOTTOM = (10, 54, 120)
+WHITE = (255, 255, 255, 255)
+ACCENT = (255, 196, 40, 255)
+
+
+def lerp(a, b, t):
+    return tuple(int(a[i] + (b[i] - a[i]) * t) for i in range(3))
+
+
+def draw_icon(size):
+    """Draws at 4x and downsamples for anti aliasing.  Small sizes get a
+    simplified glyph with thicker strokes so they stay legible."""
+    ss = 4
+    S = size * ss
+    img = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+
+    small = size <= 24
+    margin = 0 if small else S * 0.04
+    radius = S * (0.16 if small else 0.2)
+
+    # background: vertical gradient in a rounded square
+    grad = Image.new("RGBA", (S, S))
+    gd = ImageDraw.Draw(grad)
+    for y in range(S):
+        gd.line([(0, y), (S, y)], fill=lerp(BG_TOP, BG_BOTTOM, y / S) + (255,))
+    mask = Image.new("L", (S, S), 0)
+    ImageDraw.Draw(mask).rounded_rectangle([margin, margin, S - margin, S - margin], radius, fill=255)
+    if not small:
+        # soft drop shadow
+        shadow = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+        sm = Image.new("L", (S, S), 0)
+        ImageDraw.Draw(sm).rounded_rectangle([margin, margin + S * 0.015, S - margin, S - margin + S * 0.015],
+                                             radius, fill=110)
+        shadow.putalpha(sm.filter(ImageFilter.GaussianBlur(S * 0.012)))
+        img = Image.alpha_composite(img, shadow)
+    img.paste(grad, (0, 0), mask)
+
+    d = ImageDraw.Draw(img)
+    u = S / 100.0  # design unit
+
+    # glossy highlight on the upper half
+    if not small:
+        hl = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+        hm = Image.new("L", (S, S), 0)
+        ImageDraw.Draw(hm).rounded_rectangle([margin, margin, S - margin, S * 0.5], radius, fill=38)
+        hl.putalpha(hm)
+        hl2 = Image.new("RGBA", (S, S), (255, 255, 255, 0))
+        hl2.putalpha(hm)
+        img = Image.alpha_composite(img, hl2)
+        d = ImageDraw.Draw(img)
+
+    lw = (9 if small else 5) * u  # line width
+
+    # master node (top) and three slave nodes (bottom) on a bus
+    if small:
+        master = (30 * u, 12 * u, 70 * u, 38 * u)
+        bus_y = 56 * u
+        slaves_x = [20 * u, 80 * u]
+        sw, sh, sy = 28 * u, 26 * u, 68 * u
+    else:
+        master = (31 * u, 16 * u, 69 * u, 40 * u)
+        bus_y = 57 * u
+        slaves_x = [22 * u, 50 * u, 78 * u]
+        sw, sh, sy = 20 * u, 18 * u, 68 * u
+
+    cx = 50 * u
+    # trunk + bus line
+    d.line([(cx, master[3]), (cx, bus_y)], fill=WHITE, width=int(lw))
+    d.line([(slaves_x[0], bus_y), (slaves_x[-1], bus_y)], fill=WHITE, width=int(lw))
+    for x in slaves_x:
+        d.line([(x, bus_y), (x, sy)], fill=WHITE, width=int(lw))
+    # round caps on the bus ends
+    r = lw / 2
+    for x in (slaves_x[0], slaves_x[-1]):
+        d.ellipse([x - r, bus_y - r, x + r, bus_y + r], fill=WHITE)
+
+    # master: accent coloured box with "M"-like register bars
+    d.rounded_rectangle(master, 5 * u, fill=ACCENT)
+    if not small:
+        bar_w = 4.2 * u
+        heights = [10, 15, 7, 13]
+        bx = master[0] + 7 * u
+        for h in heights:
+            d.rectangle([bx, master[3] - 5 * u - h * u, bx + bar_w, master[3] - 5 * u], fill=BG_BOTTOM + (255,))
+            bx += bar_w + 3.2 * u
+
+    # slaves: white boxes with a dark "register" line
+    for x in slaves_x:
+        box = (x - sw / 2, sy, x + sw / 2, sy + sh)
+        d.rounded_rectangle(box, 3.5 * u, fill=WHITE)
+        if not small:
+            for i in range(2):
+                yy = sy + (5.5 + i * 6.5) * u
+                d.line([(box[0] + 4.5 * u, yy), (box[2] - 4.5 * u, yy)], fill=BG_TOP + (255,), width=int(2.6 * u))
+
+    return img.resize((size, size), Image.LANCZOS)
+
+
+def main():
+    icons_dir = os.path.join(ROOT, "resources", "icons")
+    os.makedirs(icons_dir, exist_ok=True)
+    images = {}
+    for s in SIZES:
+        im = draw_icon(s)
+        images[s] = im
+        im.save(os.path.join(icons_dir, "modbus-gui-%d.png" % s), optimize=True)
+
+    # Windows .ico (PNG compressed 256 entry, BMP for the rest)
+    ico_sizes = [16, 20, 24, 32, 40, 48, 64, 128, 256]
+    images[256].save(os.path.join(ROOT, "resources", "modbus_gui.ico"),
+                     sizes=[(s, s) for s in ico_sizes],
+                     append_images=[images[s] for s in ico_sizes if s != 256])
+
+    # Embedded PNG data for wxIconBundle
+    embed = [16, 24, 32, 48, 64, 128, 256]
+    out = ["// Generated by tools/make_icons.py - do not edit.", "#pragma once", "",
+           "#include <cstddef>", "", "namespace AppIconData {", ""]
+    for s in embed:
+        buf = io.BytesIO()
+        images[s].save(buf, "PNG", optimize=True)
+        data = buf.getvalue()
+        out.append("static const unsigned char png%d[] = {" % s)
+        for i in range(0, len(data), 20):
+            out.append("    " + ", ".join("0x%02x" % b for b in data[i:i + 20]) + ",")
+        out.append("};")
+        out.append("")
+    out.append("struct Entry {")
+    out.append("    const unsigned char* data;")
+    out.append("    size_t size;")
+    out.append("};")
+    out.append("")
+    out.append("static const Entry entries[] = {")
+    for s in embed:
+        out.append("    {png%d, sizeof(png%d)}," % (s, s))
+    out.append("};")
+    out.append("")
+    out.append("} // namespace AppIconData")
+    with open(os.path.join(ROOT, "src", "AppIconData.h"), "w") as f:
+        f.write("\n".join(out) + "\n")
+
+    # Preview sheet (not installed)
+    if "--preview" in sys.argv:
+        sheet = Image.new("RGBA", (sum(SIZES[:-1]) + 20 * len(SIZES), 300), (235, 235, 235, 255))
+        x = 10
+        for s in SIZES[:-1]:
+            sheet.paste(images[s], (x, 10), images[s])
+            x += s + 20
+        dark = Image.new("RGBA", sheet.size, (40, 40, 40, 255))
+        x = 10
+        for s in SIZES[:-1]:
+            dark.paste(images[s], (x, 10), images[s])
+            x += s + 20
+        both = Image.new("RGBA", (sheet.width, 600))
+        both.paste(sheet, (0, 0))
+        both.paste(dark, (0, 300))
+        both.save(sys.argv[sys.argv.index("--preview") + 1])
+    print("icons written")
+
+
+if __name__ == "__main__":
+    main()
