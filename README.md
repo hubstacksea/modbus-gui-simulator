@@ -4,6 +4,22 @@
 1 つのウィンドウでマスター（クライアント）タブとスレーブ（サーバ・シミュレータ）タブを好きな数だけ開けます。
 Linux（GTK3）と Windows（MinGW-w64：クロスコンパイルまたは MSYS2 ネイティブ）の両方でビルドできます。
 
+![Master](docs/screenshots/master.png)
+*マスター：保持レジスタを周期ポーリングし、ダブルクリックで書き込み*
+
+![Slave](docs/screenshots/slave.png)
+*スレーブ：値シミュレーション（Sine / Increment / Random / Triangle）、マスターから書き込まれたセルは黄色*
+
+## ダウンロード
+
+[Releases](https://github.com/hubstacksea/modbus-gui-simulator/releases) から入手できます。
+
+| OS | ファイル | インストール |
+|---|---|---|
+| Windows (x64) | `modbus-gui-1.0.0-win64.7z` | 展開して `modbus_gui.exe` を実行 |
+| Debian / Ubuntu | `modbus-gui_1.0.0-1_amd64.deb` | `sudo apt install ./modbus-gui_1.0.0-1_amd64.deb` |
+| Fedora / RHEL 系 | `modbus-gui-1.0.0-1.x86_64.rpm` | `sudo dnf install ./modbus-gui-1.0.0-1.x86_64.rpm` |
+
 ## 機能
 
 ### マスター（クライアント）
@@ -77,7 +93,7 @@ cmake --build build
   対象のディストリビューションで動かすには、そのディストリ上（または同等の環境）でビルドしてください。
 - Windows の 7z には exe 単体（静的リンク、アイコンとバージョン情報を埋め込み済み）、README、
   libmodbus のライセンスが入っています。展開すればそのまま実行できます。
-- メンテナ / ライセンス / URL は CMake 変数で指定します。
+- メンテナ / ライセンス / URL は CMake 変数で変更できます（既定値は本リポジトリの設定）。
   ```sh
   ./package_linux.sh -DMODBUSGUI_MAINTAINER="Name <mail@example.com>" \
                      -DMODBUSGUI_LICENSE="MIT" -DMODBUSGUI_HOMEPAGE="https://..."
@@ -111,8 +127,6 @@ MODBUS_TEST_RTU_A=/dev/pts/4 MODBUS_TEST_RTU_B=/dev/pts/5 ./build-linux/test_cor
   コンボボックスには直接入力もできます（例：`/dev/pts/3`、`COM12`）。
 - RTU スレーブが他ユニット宛てのリクエストを無視したあと、libmodbus は次のフレームをそのユニットの応答とみなして読み捨てます
   （最大 200 ms）。
-- libmodbus のライセンスは LGPL-2.1-or-later です。静的リンクしたバイナリを配布するときは、LGPL の条件に従ってください
-  （オブジェクトファイルやソースを提供して、利用者が再リンクできるようにするなど）。
 
 ## 構成
 ```
@@ -136,3 +150,14 @@ package_windows.sh            .7z の作成（MinGW クロスビルド）
 cmake/                        同梱 libmodbus のビルド、wx-config の検出、MinGW ツールチェーン、パッケージ設定
 third_party/libmodbus         libmodbus 3.1.11（未改変）
 ```
+
+## ライセンス
+
+libmodbus に合わせて **GNU Lesser General Public License v2.1 or later（LGPL-2.1-or-later）** で公開しています。
+全文は [LICENSE](LICENSE) を参照してください。
+
+- 同梱の libmodbus（`third_party/libmodbus`）も LGPL-2.1-or-later です。
+- wxWidgets は wxWindows Library Licence（LGPL に、バイナリ配布の例外を加えたもの）です。
+- 配布バイナリは libmodbus を静的リンクしています。LGPL の再リンク要件は、このリポジトリで
+  ソース一式とビルド手順を公開することで満たしています。
+

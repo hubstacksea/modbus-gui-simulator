@@ -115,6 +115,7 @@ void MainFrame::OnAbout(wxCommandEvent&)
     info.SetDescription("Modbus TCP / RTU master tool and slave simulator.\n\n" + ModbusUtil::LibVersion() + "\n" +
                         wxVERSION_STRING);
     info.SetIcon(GetIcons().GetIcon(FromDIP(wxSize(64, 64))));
-    info.SetCopyright("libmodbus is licensed under LGPL-2.1-or-later");
+    info.SetCopyright("Licensed under LGPL-2.1-or-later (same as libmodbus)");
+    info.SetWebSite("https://github.com/hubstacksea/modbus-gui-simulator");
     wxAboutBox(info, this);
 }

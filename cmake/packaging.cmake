@@ -1,10 +1,10 @@
 # Install layout and CPack configuration.
 #   Linux  : cpack -G "DEB;RPM"   -> modbus-gui_<ver>_amd64.deb / modbus-gui-<ver>-1.x86_64.rpm
 #   Windows: cpack -G 7Z          -> modbus-gui-<ver>-win64.7z
-set(MODBUSGUI_MAINTAINER "Modbus GUI Maintainer <maintainer@example.com>"
+set(MODBUSGUI_MAINTAINER "hubstacksea <343302215+hubstacksea@users.noreply.github.com>"
     CACHE STRING "Package maintainer (Name <email>)")
-set(MODBUSGUI_LICENSE "Unspecified" CACHE STRING "License string written into the packages")
-set(MODBUSGUI_HOMEPAGE "" CACHE STRING "Project home page URL")
+set(MODBUSGUI_LICENSE "LGPL-2.1-or-later" CACHE STRING "License string written into the packages")
+set(MODBUSGUI_HOMEPAGE "https://github.com/hubstacksea/modbus-gui-simulator" CACHE STRING "Project home page URL")
 
 set(PKG_NAME modbus-gui)
 # 0755 directories regardless of the builder's umask
@@ -16,6 +16,7 @@ if(WIN32)
     # Portable layout: everything in the archive root folder
     install(TARGETS modbus_gui RUNTIME DESTINATION .)
     install(FILES README.md DESTINATION .)
+    install(FILES LICENSE DESTINATION . RENAME LICENSE.txt)
     install(FILES ${LIBMODBUS_LICENSE_FILE} DESTINATION licenses RENAME libmodbus-COPYING.LESSER.txt)
 else()
     include(GNUInstallDirs)
@@ -29,7 +30,7 @@ else()
     endforeach()
     install(FILES resources/icons/modbus-gui-128.png DESTINATION ${CMAKE_INSTALL_DATADIR}/pixmaps
             RENAME ${PKG_NAME}.png)
-    install(FILES README.md DESTINATION ${CMAKE_INSTALL_DATADIR}/doc/${PKG_NAME})
+    install(FILES README.md LICENSE DESTINATION ${CMAKE_INSTALL_DATADIR}/doc/${PKG_NAME})
     install(FILES ${LIBMODBUS_LICENSE_FILE} DESTINATION ${CMAKE_INSTALL_DATADIR}/doc/${PKG_NAME}
             RENAME libmodbus-COPYING.LESSER)
 endif()
@@ -46,6 +47,7 @@ string(CONCAT CPACK_PACKAGE_DESCRIPTION
 set(CPACK_PACKAGE_CONTACT ${MODBUSGUI_MAINTAINER})
 set(CPACK_PACKAGE_ICON ${CMAKE_SOURCE_DIR}/resources/modbus_gui.ico)
 set(CPACK_RESOURCE_FILE_README ${CMAKE_SOURCE_DIR}/README.md)
+set(CPACK_RESOURCE_FILE_LICENSE ${CMAKE_SOURCE_DIR}/LICENSE)
 set(CPACK_STRIP_FILES ON)
 set(CPACK_SOURCE_IGNORE_FILES "/build.*/;/\\\\.git/")
 if(MODBUSGUI_HOMEPAGE)
